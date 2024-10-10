@@ -1,6 +1,6 @@
 ---
 title: "HW 3"
-author: "Student Name"
+author: "Jonathan Zhao"
 date: "9/24/2024"
 output: 
   html_document:
@@ -11,7 +11,8 @@ output:
 
 Let $E[X] = \mu$.  Show that $Var[X] := E[(X-E[X])^2] = E[X^2]-(E[X])^2$.  Note, all you have to do is show the second equality (the first is our definition from class). 
 
-
+Expand $E[(X-E[X])^2]$ into $E[(X^2 - 2X*E[X] + E[X]^2)]$. Now, apply linearity of expectation to get 
+$E[X^2] - E[2X*E[X]] + E[E[X]^2]$. Since E[X] is a constant, and the expected value of a constant is the constant, simplify to $E[X^2] - (2E[X] * E[X]) + E[X]^2 = E[X^2] - 2E[X]^2 + E[X]^2$. Finally, this simplifies to $E[X^2] - E[x]^2$.
 
 # 
 
