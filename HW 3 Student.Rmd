@@ -55,7 +55,7 @@ Notice that the above decision boundary is decidedly non-linear.  It seems to pe
 
 ```{r}
 
-newsvmfit = svm(y~., data = train_data, kernel = "radial", cost = 10000, gamma = 1, scale = FALSE) #y~. is giving it explanatory vars, 
+newsvmfit = svm(y~., data = train_data, kernel = "radial", cost = 10000, gamma = 1, scale = FALSE) 
 print(newsvmfit)
 plot(newsvmfit, dat)
 ```
@@ -107,7 +107,7 @@ Let's try and balance the above to solutions via cross-validation.  Using the `t
 ```{r}
 
 set.seed(1)
-tune.out = tune(svm, y ~ ., data = train_data,cost = c(0.1, 1, 10, 100, 1000),  gamma = c(0.5, 1,2,3,4))
+tune.out = tune(svm, y ~ ., data = train_data,ranges = list(cost = c(0.1, 1, 10, 100, 1000),  gamma = c(0.5, 1,2,3,4)))
 
 ```
 
@@ -123,8 +123,7 @@ table(true=dat[-train_index,"y"], pred=predict(tune.out$best.model, newdata=dat[
 Comment on the confusion matrix.  How have we improved upon the model in question 2 and what qualifications are still necessary for this improved model.  
 
 *Student Response*
-The model has improved, 
-
+The model was improved by tuning the gamma and cost via cross-validation. The underlying dataset needs to be improved for this model to improve, since there are a lot more class 1 than class 2 values.
 
 
 

@@ -418,7 +418,7 @@ seems to perform reasonably well, but there are indeed some
 misclassifications. Let’s see if increasing the cost <a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> helps our
 classification error rate. Refit the svm with the radial kernel, <span class="math inline">\(\gamma=1\)</span>, and a cost of 10000. Plot this
 svm on the training data.</p>
-<pre class="r"><code>newsvmfit = svm(y~., data = train_data, kernel = &quot;radial&quot;, cost = 10000, gamma = 1, scale = FALSE) #y~. is giving it explanatory vars, 
+<pre class="r"><code>newsvmfit = svm(y~., data = train_data, kernel = &quot;radial&quot;, cost = 10000, gamma = 1, scale = FALSE) 
 print(newsvmfit)</code></pre>
 <pre><code>## 
 ## Call:
@@ -485,22 +485,25 @@ list of the following cost and <span class="math inline">\(\gamma\)</span> value
 and {0.5, 1,2,3,4}. Save the output of this function in a variable
 called <code>tune.out</code>.</p>
 <pre class="r"><code>set.seed(1)
-tune.out = tune(svm, y ~ ., data = train_data,cost = c(0.1, 1, 10, 100, 1000),  gamma = c(0.5, 1,2,3,4))</code></pre>
+tune.out = tune(svm, y ~ ., data = train_data,ranges = list(cost = c(0.1, 1, 10, 100, 1000),  gamma = c(0.5, 1,2,3,4)))</code></pre>
 <p>I will take <code>tune.out</code> and use the best model according to
 error rate to test on our data. I will report a confusion matrix
 corresponding to the 100 predictions.</p>
 <pre class="r"><code>table(true=dat[-train_index,&quot;y&quot;], pred=predict(tune.out$best.model, newdata=dat[-train_index,]))</code></pre>
 <pre><code>##     pred
 ## true  1  2
-##    1 79  0
-##    2 21  0</code></pre>
+##    1 72  7
+##    2  1 20</code></pre>
 </div>
 <div id="section-8" class="section level2" number="2.7">
 <h2><span class="header-section-number">2.7</span> </h2>
 <p>Comment on the confusion matrix. How have we improved upon the model
 in question 2 and what qualifications are still necessary for this
 improved model.</p>
-<p><em>Student Response</em> The model has improved,</p>
+<p><em>Student Response</em> The model was improved by tuning the gamma
+and cost via cross-validation. The underlying dataset needs to be
+improved for this model to improve, since there are a lot more class 1
+than class 2 values.</p>
 </div>
 </div>
 <div id="section-9" class="section level1" number="3">
