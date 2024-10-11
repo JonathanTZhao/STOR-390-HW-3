@@ -37,11 +37,15 @@ Quite clearly, the above data is not linearly separable.  Create a training-test
 
 ```{r}
 set.seed(1)
-train=sample(1:nrow(dat), 100)
+train_index = sample(1:200, 100)
+train_data = dat[train_index, ]
 
-svmfit = svm(y~., data = train, kernel = "radial", cost = 1, gamma = 1, scale = FALSE) #y~. is giving it explanatory vars, 
+
+svmfit = svm(y~., data = train_data, kernel = "radial", cost = 1, gamma = 1, scale = FALSE) #y~. is giving it explanatory vars, 
 print(svmfit)
 plot(svmfit, dat)
+
+
 
 ```
 
@@ -51,7 +55,7 @@ Notice that the above decision boundary is decidedly non-linear.  It seems to pe
 
 ```{r}
 
-newsvmfit = svm(y~., data = dat, kernel = "radial", cost = 10000, gamma = 1, scale = FALSE) #y~. is giving it explanatory vars, 
+newsvmfit = svm(y~., data = train_data, kernel = "radial", cost = 10000, gamma = 1, scale = FALSE) #y~. is giving it explanatory vars, 
 print(newsvmfit)
 plot(newsvmfit, dat)
 ```
@@ -61,7 +65,7 @@ plot(newsvmfit, dat)
 It would appear that we are better capturing the training data, but comment on the dangers (if any exist), of such a model. 
 
 *Student Answer*
-Increasing the cost makes the model more accurate on the training data, but it comes at the cost of lower generalization. This means that when using this model on other data, it could perform worse.
+Increasing the cost makes the model more accurate on the training data, but it comes at the cost of lower generalization. This means that when using this model on other data, it could perform worse. In this model, you can see that it is really fitted to the test data, which means it could break for other data.
 
 
 
@@ -71,10 +75,16 @@ Create a confusion matrix by using this svm to predict on the current testing pa
 
 ```{r}
 #remove eval = FALSE in above
-table(true=dat[-train,"y"], pred=predict(svmfit, newdata=dat[-train,]))
+#table(true=dat[-train_data,"y"], pred=predict(newsvmfit, newdata=dat[-train_data,]))
+#pred = predict(newsvmfit, newdata = dat[-train_index, ])
+
+# Create a confusion matrix comparing true labels and predictions
+table(true = dat[-train_index, "y"], pred = predict(newsvmfit, newdata = dat[-train_index, ]))
+
 ```
 *Student Response*
 
+It is quite accurate but there is a lot of misclassification. 17/100 were predicted to be class 2 but were actually class 1.
 
 
 ##
@@ -82,11 +92,13 @@ table(true=dat[-train,"y"], pred=predict(svmfit, newdata=dat[-train,]))
 Is this disparity because of imbalance in the training/testing partition?  Find the proportion of class `2` in your training partition and see if it is broadly representative of the underlying 25\% of class 2 in the data as a whole.  
 
 ```{r}
-
+(3+18) / (62+17+3+18)
 
 ```
 
 *Student Response*
+
+The disparity doesn't seems to be because of an imbalance in training/testing partition. Here, class 2 represents 21% of the data, which is not significantly different from 25%.
 
 ##
 
@@ -95,15 +107,15 @@ Let's try and balance the above to solutions via cross-validation.  Using the `t
 ```{r}
 
 set.seed(1)
-
+tune.out = tune(svm, y ~ ., data = train_data,cost = c(0.1, 1, 10, 100, 1000),  gamma = c(0.5, 1,2,3,4))
 
 ```
 
 I will take `tune.out` and use the best model according to error rate to test on our data.  I will report a confusion matrix corresponding to the 100 predictions.  
 
 
-```{r, eval = FALSE}
-table(true=dat[-train,"y"], pred=predict(tune.out$best.model, newdata=dat[-train,]))
+```{r}
+table(true=dat[-train_index,"y"], pred=predict(tune.out$best.model, newdata=dat[-train_index,]))
 ```
 
 ##
@@ -111,6 +123,11 @@ table(true=dat[-train,"y"], pred=predict(tune.out$best.model, newdata=dat[-train
 Comment on the confusion matrix.  How have we improved upon the model in question 2 and what qualifications are still necessary for this improved model.  
 
 *Student Response*
+The model has improved, 
+
+
+
+
 
 # 
 Let's turn now to decision trees.  
@@ -129,12 +146,10 @@ summary(heart)
 The response variable is currently a categorical variable with four levels.  Convert heart disease into binary categorical variable.  Then, ensure that it is properly stored as a factor. 
 
 ```{r}
-#heart_disease =  ifelse(heart$cp == "2" | heart$cp == "1", "low", "high")
+
 heart_disease <- ifelse(heart$cp == "2" | heart$cp == "1", "low", "high")  
 hd <- as.factor(heart_disease)
-data.frame(heart, hd)
-summary(heart$heart_disease)
-str(heart$cp)
+heart <- data.frame(heart, hd)
 #297
 
 ```
@@ -178,12 +193,13 @@ set.seed(101)
 cv.heart = cv.tree(heart_tree, FUN = prune.misclass)
 plot(cv.heart$size, cv.heart$dev, type = "b")
 
-prune.heart <- prune.misclass(heart_tree, best = 11) #Graph shows 11 is simplest and lowest misclass rate
+prune.heart <- prune.misclass(heart_tree, best = 10) #Graph shows 10 is simplest and lowest misclass rate
 
+newtree.pred = predict(prune.heart, heart[-train,], type="class")
 
 plot(prune.heart)
 text(prune.heart, pretty=0)
-
+with(heart[-train,], table(newtree.pred, hd))
 
 ```
 
@@ -194,7 +210,7 @@ Discuss the trade-off in accuracy and interpretability in pruning the above tree
 
 *Student Input *
 
-The benefit of pruning a decision tree is that it simplifies the tree down which helps with avoiding overfitting, so it is less sensitive to random outliers. Pruning also makes a decision tree easier to read because there will be less splits. The downsides of pruning is that you lose perfect purity. The collapsed branches will not have perfectly pure nodes.
+The benefit of pruning a decision tree is that it simplifies the tree down which helps with avoiding overfitting, so it can be generalized. Pruning also makes a decision tree more interpretable because there will be less splits. The downsides of pruning is that you lose perfect purity. The collapsed branches will not have perfectly pure nodes.
 
 ## 
 
