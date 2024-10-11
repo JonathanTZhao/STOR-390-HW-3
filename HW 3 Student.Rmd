@@ -37,6 +37,11 @@ Quite clearly, the above data is not linearly separable.  Create a training-test
 
 ```{r}
 set.seed(1)
+train=sample(1:nrow(dat), 100)
+
+svmfit = svm(y~., data = train, kernel = "radial", cost = 1, gamma = 1, scale = FALSE) #y~. is giving it explanatory vars, 
+print(svmfit)
+plot(svmfit, dat)
 
 ```
 
@@ -46,7 +51,9 @@ Notice that the above decision boundary is decidedly non-linear.  It seems to pe
 
 ```{r}
 
-
+newsvmfit = svm(y~., data = dat, kernel = "radial", cost = 10000, gamma = 1, scale = FALSE) #y~. is giving it explanatory vars, 
+print(newsvmfit)
+plot(newsvmfit, dat)
 ```
 
 ##
@@ -54,15 +61,20 @@ Notice that the above decision boundary is decidedly non-linear.  It seems to pe
 It would appear that we are better capturing the training data, but comment on the dangers (if any exist), of such a model. 
 
 *Student Answer*
+Increasing the cost makes the model more accurate on the training data, but it comes at the cost of lower generalization. This means that when using this model on other data, it could perform worse.
+
+
 
 ##
 
 Create a confusion matrix by using this svm to predict on the current testing partition.  Comment on the confusion matrix.  Is there any disparity in our classification results?    
 
-```{r, eval = FALSE}
+```{r}
 #remove eval = FALSE in above
 table(true=dat[-train,"y"], pred=predict(svmfit, newdata=dat[-train,]))
 ```
+*Student Response*
+
 
 
 ##
@@ -108,7 +120,8 @@ Let's turn now to decision trees.
 library(kmed)
 data(heart)
 library(tree)
-
+names(heart)
+summary(heart)
 ```
 
 ## 
@@ -116,7 +129,13 @@ library(tree)
 The response variable is currently a categorical variable with four levels.  Convert heart disease into binary categorical variable.  Then, ensure that it is properly stored as a factor. 
 
 ```{r}
-
+#heart_disease =  ifelse(heart$cp == "2" | heart$cp == "1", "low", "high")
+heart_disease <- ifelse(heart$cp == "2" | heart$cp == "1", "low", "high")  
+hd <- as.factor(heart_disease)
+data.frame(heart, hd)
+summary(heart$heart_disease)
+str(heart$cp)
+#297
 
 ```
 
@@ -126,7 +145,10 @@ Train a classification tree on a 240 observation training subset (using the seed
 
 ```{r}
 set.seed(101)
-
+train=sample(1:nrow(heart), 240)
+heart_tree = tree(hd~. -cp, heart, subset = train)
+plot(heart_tree)
+text(heart_tree, pretty = 0)
 ```
 
 
@@ -135,6 +157,14 @@ set.seed(101)
 Use the trained model to classify the remaining testing points.  Create a confusion matrix to evaluate performance.  Report the classification error rate.  
 
 ```{r}
+
+tree.pred = predict(heart_tree, heart[-train,], type="class")
+#length(tree.pred)
+#length(hd)
+#table(tree.pred)
+#table(hd)
+#str(heart[-train,])
+with(heart[-train,], table(tree.pred, hd))
 
 
 ```
@@ -145,6 +175,15 @@ Above we have a fully grown (bushy) tree.  Now, cross validate it using the `cv.
 
 ```{r}
 set.seed(101)
+cv.heart = cv.tree(heart_tree, FUN = prune.misclass)
+plot(cv.heart$size, cv.heart$dev, type = "b")
+
+prune.heart <- prune.misclass(heart_tree, best = 11) #Graph shows 11 is simplest and lowest misclass rate
+
+
+plot(prune.heart)
+text(prune.heart, pretty=0)
+
 
 ```
 
@@ -155,8 +194,12 @@ Discuss the trade-off in accuracy and interpretability in pruning the above tree
 
 *Student Input *
 
+The benefit of pruning a decision tree is that it simplifies the tree down which helps with avoiding overfitting, so it is less sensitive to random outliers. Pruning also makes a decision tree easier to read because there will be less splits. The downsides of pruning is that you lose perfect purity. The collapsed branches will not have perfectly pure nodes.
+
 ## 
 
 Discuss the ways a decision tree could manifest algorithmic bias.  
 
 *Student Answer*
+
+There are 3 main ways a decision tree could manifest algorithmic bias, with are Independence, Separation and Sufficiency. Independence looks at whether the decision tree has desperate impact or statistical parity, and considers a tree biased if it fulfills either of those conditions. Separation checks if the prediction is independent of the protected variable conditional to the ground truth, and looks at if it violates equilized odds. Finally, Sufficiency checks if the outcome of tree is independent from the groups they came from.
